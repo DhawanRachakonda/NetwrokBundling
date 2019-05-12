@@ -11,4 +11,5 @@ module.exports = {
   templatePath: path.resolve(__dirname, 'src/template.html'),
   cssFolder: path.resolve(__dirname, 'assets/css'),
   jsFolder: path.resolve(__dirname, 'assets/js'),
+  jsPath: './assets/js/',
 };

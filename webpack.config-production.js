@@ -3,19 +3,22 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const ParallelUglifyPlugin = require('webpack-parallel-uglify-plugin');
+const CleanWebpackPlugin = require('webpack-clean-plugin');
+const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const commonPaths = require('./paths');
-
-const PUBLIC_DOMAIN = 'localhost';
-const THIS_SERVER_NAME = 'localhost';
+const cleanOptions = {
+    root: commonPaths.root,
+}
 
 module.exports = env =>  {
   return  {
-    mode: 'development',
+    mode: 'production',
     entry: commonPaths.entryPath,
     output: {
+    path: path.resolve(__dirname,commonPaths.jsPath+"/"+env),
       filename: '[name].js',
-      path: commonPaths.outputPath,
       chunkFilename: '[name].js',
     },
     devtool: 'source-map',
@@ -63,6 +66,7 @@ module.exports = env =>  {
             }
         }
       }),
+      new CleanWebpackPlugin(commonPaths.jsFolder+"/"+env, cleanOptions),
       new webpack.ProgressPlugin(),
       new HtmlWebpackPlugin({
         template: commonPaths.templatePath,
@@ -79,23 +83,41 @@ module.exports = env =>  {
         defaults: false, // load '.env.defaults' as the default values if empty.
       }),
     ],
-    devServer: {
-      hot: true,
-      inline: true,
-      port: 3003,
-      public: PUBLIC_DOMAIN,
-      proxy: [
-        {
-          context: ['/api/*'],
-          target: {
-            host: THIS_SERVER_NAME,
-            protocol: 'http:',
-            port: 8089,
-          },
-          secure: false,
-          changeOrigin: false,
+    optimization: {
+        runtimeChunk: false,
+        minimize : true,
+        splitChunks: {
+            cacheGroups: {
+                commons: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'initial',
+                    filename : 'vendor.bundle.js'
+                },
+            },
         },
-      ],
+        minimizer: [
+            new UglifyJsPlugin({
+                include : /\.(js)/g,
+                minify(file, sourceMap) {
+                    // https://github.com/mishoo/UglifyJS2#minify-options
+                    const uglifyJsOptions = {
+                        compress: {
+                            dead_code: true,
+                            global_defs: {
+                                CURRENT_BANDWIDTH: env
+                            }
+                        }
+                    };
+                    if (sourceMap) {
+                      uglifyJsOptions.sourceMap = {
+                        content: sourceMap,
+                      };
+                    }
+                    return require('uglify-js').minify(file, uglifyJsOptions);
+                },
+            }),
+        ]
     },
   };
 }

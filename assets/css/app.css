@@ -13,3 +13,16 @@ tr:hover {
 .margin-top--20px{
     margin-top: 20px;
 }
+.product-image {
+    width: 100%;
+}
+.product-listing .product {
+    display: inline-block;
+    width: 25%;
+}
+.product-listing {
+    width: 100%;
+}
+.product-details{
+    margin-bottom: 5%;
+}
